@@ -1,0 +1,1 @@
+export const userAgent: string = 'Node-JS Cheerio Web Scraper - Github TwiggyRJ';

@@ -23,7 +23,19 @@ const devOption = {
     choices: ['Yes', 'No'],
 };
 
-async function renderSingleDigimonOption(isDev: boolean) {
+
+
+async function menuGetDigimon(url: string) {
+    const digimon = await getDigimonMetaData(url);
+    const file = `${dir}/${digimon.name}.json`;
+
+    console.info(`Saving file to save: ${file}`);
+    doesDataFolderExist();
+    storeData(file, digimon);
+    console.info(`File saved save to: ${file}`);
+}
+
+async function renderSingleDigimonUrlOption(isDev: boolean) {
     return inquirer.prompt({
         type: 'editor',
         name: 'url',
@@ -32,13 +44,42 @@ async function renderSingleDigimonOption(isDev: boolean) {
         const url = answers.url.length > 0 ? answers.url.replace('/(\r\n|\n|\r)/gm', '') : 'https://www.grindosaur.com/en/games/digimon/digimon-story-cyber-sleuth/digimon/262-gallantmon';
         
         if (url.length > 0) {
-            const digimon = await getDigimonMetaData(url);
-            const file = `${dir}/${digimon.name}.json`;
+            await menuGetDigimon(url);
+        }
+    })
+}
 
-            console.info(`Saving file to save: ${file}`);
-            doesDataFolderExist();
-            storeData(file, digimon);
-            console.info(`File saved save to: ${file}`);
+async function renderSingleDigimonOption(isDev: boolean) {
+    return inquirer.prompt({
+        type: 'list',
+        name: 'digimon',
+        message: 'Single or all of them?',
+        choices: ['Kuramon', 'Gallantmon', 'Andromon', 'Leopardmon NX', 'Custom']
+    }).then(async (answers) => {
+        switch (answers.digimon) {
+            case 'Kuramon':
+                await menuGetDigimon('https://www.grindosaur.com/en/games/digimon/digimon-story-cyber-sleuth/digimon/1-kuramon');
+                break;
+
+            case 'Gallantmon':
+                await menuGetDigimon('https://www.grindosaur.com/en/games/digimon/digimon-story-cyber-sleuth/digimon/262-gallantmon');
+                break;
+
+            case 'Andromon':
+                await menuGetDigimon('https://www.grindosaur.com/en/games/digimon/digimon-story-cyber-sleuth/digimon/144-andromon');
+                break;
+
+            case 'Leopardmon NX':
+                await menuGetDigimon('https://www.grindosaur.com/en/games/digimon/digimon-story-cyber-sleuth/digimon/339-leopardmon-nx');
+                break;
+
+            case 'Custom':
+                renderSingleDigimonUrlOption(isDev);
+                break;
+        
+            default:
+                renderSingleDigimonUrlOption(isDev);
+                break;
         }
     })
 }

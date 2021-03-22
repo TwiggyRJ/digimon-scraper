@@ -4,8 +4,8 @@ export class Digimon implements IDigimon {
     name = '';
     number = 0;
     stage = Stage.trainingLower;
-    attribute = Attribute.free;
-    type = Type.neutral;
+    type = Type.free;
+    attribute = Attribute.neutral;
     memoryUsage = 2;
     equipmentSlot = 0;
     digivolutionConditions = null;
@@ -20,12 +20,5 @@ export class Digimon implements IDigimon {
         title: '',
         description: '',
         url: ''
-    }
-
-    constructor(name: string, number: string | number, stage: Stage, type: Type) {
-        this.name = name;
-        this.number = Number(number);
-        this.stage = stage;
-        this.type = type;
     }
 }

@@ -5,56 +5,56 @@ import {
     ItemCategory,
 } from '../interfaces/interfaces';
 
-export function getAttribute(rawValue: string): Attribute {
+export function getType(rawValue: string): Type {
     switch (rawValue) {
         case 'Data':
-            return Attribute.data;
+            return Type.data;
         
         case 'Free':
-            return Attribute.free;
+            return Type.free;
 
         case 'Vaccine':
-            return Attribute.vaccine;
+            return Type.vaccine;
 
         case 'Virus':
-            return Attribute.virus;
+            return Type.virus;
     
         default:
-            return Attribute.free;
+            return Type.free;
     }
 }
 
-export function getType(rawValue: string): Type {
+export function getAttribute(rawValue: string): Attribute {
     switch (rawValue) {
         case 'Dark':
-            return Type.dark;
+            return Attribute.dark;
         
         case 'Earth':
-            return Type.earth;
+            return Attribute.earth;
 
         case 'Electric':
-            return Type.electric;
+            return Attribute.electric;
 
         case 'Fire':
-            return Type.fire;
+            return Attribute.fire;
 
         case 'Light':
-            return Type.light;
+            return Attribute.light;
 
         case 'Neutral':
-            return Type.neutral;
+            return Attribute.neutral;
 
         case 'Plant':
-            return Type.plant;
+            return Attribute.plant;
 
         case 'Water':
-            return Type.water;
+            return Attribute.water;
 
         case 'Wind':
-            return Type.wind;
+            return Attribute.wind;
     
         default:
-            return Type.neutral;
+            return Attribute.neutral;
     }
 }
 

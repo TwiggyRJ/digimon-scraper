@@ -3,14 +3,14 @@ export enum Effectiveness {
     weakness = 'weakness'
 }
 
-export enum Attribute {
+export enum Type {
     data = 'data',
     free = 'free',
     vaccine = 'vaccine',
     virus = 'virus',
 }
 
-export enum Type {
+export enum Attribute {
     dark = 'dark',
     earth = 'earth',
     electric = 'electric',
