@@ -1,25 +1,16 @@
 // digimon-scraper.ts
 import axios from 'axios';
 import cheerio from 'cheerio';
-import fs from 'fs';
 import { getDigimonMetaData } from './digimon-scraper';
+import { Digimon, DigimonMeta } from './interfaces/interfaces';
+import { getAttribute, getStage, getType } from './utils/converters';
+import { dir, doesDataFolderExist, storeData } from './utils/files';
 
 const url = 'https://www.grindosaur.com/en/games/digimon/digimon-story-cyber-sleuth/digimon';
-const dir = './data';
-
-function storeData(path: string, data: any) {
-    try {
-        fs.writeFileSync(path, JSON.stringify(data))
-    } catch (err) {
-        console.error(err)
-    }
-}
 
 export async function getDigimon(isDev: boolean) {
     try {
-        if (!fs.existsSync(dir)){
-            fs.mkdirSync(dir);
-        }
+        doesDataFolderExist();
         
         await axios(url)
         .then(response => {
@@ -40,7 +31,21 @@ export async function getDigimon(isDev: boolean) {
                 const equipmentSlot = $(element).find('td:nth-child(8)').text();
                 const url = $(element).find('td:nth-child(3) > a').attr('href');
 
-                let vals = {};
+                let vals: DigimonMeta = {
+                    digivolutionConditions: null,
+                    digivolutionPotential: [],
+                    digivolutionHistory: [],
+                    drops: [],
+                    moves: [],
+                    typeEffectiveness: null,
+                    spawnLocations: [],
+                    stats: [],
+                    supportSkill: {
+                        title: '',
+                        description: '',
+                        url: ''
+                    }
+                };
 
                 if (isDev) {
                     if (index < 2) {
@@ -50,24 +55,24 @@ export async function getDigimon(isDev: boolean) {
                     vals = await getDigimonMetaData(url || '');
                 }
 
-                const digimon: any = {
-                    vals: vals,
+                const digimon: Digimon = {
+                    ...vals,
                     name,
-                    number,
-                    stage,
-                    attribute,
-                    type,
-                    memoryUsage,
-                    equipmentSlot
+                    number: Number(number),
+                    stage: getStage(stage),
+                    attribute: getAttribute(attribute),
+                    type: getType(type),
+                    memoryUsage: Number(memoryUsage),
+                    equipmentSlot: Number(equipmentSlot)
                 };
 
                 console.log(digimon);
 
-                storeData(`data/${digimon.name}.json`, digimon);
+                storeData(`${dir}/${digimon.name}.json`, digimon);
                 digimons.push(digimon);
             });
 
-            storeData(`data/digimon.json`, JSON.stringify(digimons));
+            storeData(`${dir}/digimon.json`, JSON.stringify(digimons));
         })
         .catch(console.error);
     } catch (error) {

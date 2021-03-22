@@ -113,13 +113,24 @@ export interface DigivolutionConditions {
     additionalRequirements: string | null;
 }
 
-export interface Digimon {
+export interface DigimonMeta {
     digivolutionConditions: DigivolutionConditions | null;
-    digivolutionRoutes: DigivolutionRoute[];
+    digivolutionPotential: DigivolutionRoute[];
+    digivolutionHistory: DigivolutionRoute[];
     drops: Drop[];
     moves: Moves[];
     typeEffectiveness: TypeEffectiveness[] | null;
     spawnLocations: SpawnLocation[];
     stats: Stats[];
     supportSkill: SupportSkill;
+}
+
+export interface Digimon extends DigimonMeta {
+    name: string;
+    number: number
+    stage: Stage;
+    attribute: Attribute;
+    type: Type;
+    memoryUsage: number;
+    equipmentSlot: number;
 }

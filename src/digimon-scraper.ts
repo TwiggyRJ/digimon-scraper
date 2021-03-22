@@ -3,21 +3,22 @@ import axios from 'axios';
 import cheerio from 'cheerio';
 
 import {
-    Attribute,
-    Digimon,
     Drop,
     Effectiveness,
     DigivolutionConditions,
     DigivolutionRoute,
     Moves,
     SpawnLocation,
-    Stage,
     Stats,
     SupportSkill,
-    Type,
     TypeEffectiveness,
-    ItemCategory
-} from './interfaces';
+    DigimonMeta,
+    Digimon,
+    Stage,
+    Attribute,
+    Type
+} from './interfaces/interfaces';
+import { getAttribute, getItemCategory, getStage, getType } from './utils/converters';
 
 let urls = [
     'https://www.grindosaur.com/en/games/digimon/digimon-story-cyber-sleuth/digimon/339-leopardmon-nx',
@@ -25,103 +26,6 @@ let urls = [
     'https://www.grindosaur.com/en/games/digimon/digimon-story-cyber-sleuth/digimon/238-grandracmon',
     'https://www.grindosaur.com/en/games/digimon/digimon-story-cyber-sleuth/digimon/144-andromon'
 ];
-
-function getAttribute(rawValue: string): Attribute {
-    switch (rawValue) {
-        case 'Data':
-            return Attribute.data;
-        
-        case 'Free':
-            return Attribute.free;
-
-        case 'Vaccine':
-            return Attribute.vaccine;
-
-        case 'Virus':
-            return Attribute.virus;
-    
-        default:
-            return Attribute.free;
-    }
-}
-
-function getType(rawValue: string): Type {
-    switch (rawValue) {
-        case 'Dark':
-            return Type.dark;
-        
-        case 'Earth':
-            return Type.earth;
-
-        case 'Electric':
-            return Type.electric;
-
-        case 'Fire':
-            return Type.fire;
-
-        case 'Light':
-            return Type.light;
-
-        case 'Neutral':
-            return Type.neutral;
-
-        case 'Plant':
-            return Type.plant;
-
-        case 'Water':
-            return Type.water;
-
-        case 'Wind':
-            return Type.wind;
-    
-        default:
-            return Type.neutral;
-    }
-}
-
-function getStage(rawValue: string): Stage {
-    switch (rawValue) {
-        case 'Training 1':
-            return Stage.trainingLower;
-        
-        case 'Training 2':
-            return Stage.trainingUpper;
-
-        case 'Rookie':
-            return Stage.rookie;
-
-        case 'Champion':
-            return Stage.champion;
-
-        case 'Ultimate':
-            return Stage.ultimate;
-
-        case 'Mega':
-            return Stage.mega;
-
-        case 'Ultra':
-            return Stage.ultra;
-
-        case 'Armor':
-            return Stage.armor;
-    
-        default:
-            return Stage.trainingLower;
-    }
-}
-
-function getItemCategory(rawValue: string): ItemCategory {
-    switch (rawValue) {
-        case 'Consumable':
-            return ItemCategory.consumable
-    
-        case 'Medal':
-            return ItemCategory.medal;
-
-        default:
-            return ItemCategory.consumable;
-    }
-}
 
 function getSupportSkill(element: cheerio.Element, $: cheerio.Root): SupportSkill {
     const supportSkillTable = $(element).find('table.table-no-stretch.center > tbody > tr');
@@ -140,6 +44,8 @@ function getSupportSkill(element: cheerio.Element, $: cheerio.Root): SupportSkil
 
 function handleElementBoxOne(element: cheerio.Element, $: cheerio.Root) {
     const elements = $(element).find('.element-overflow');
+
+    const digimon = getBaseDigimon(elements[0], $);
 
     if (elements.length > 2) {
         const typeEffectivenessTable = $(elements[1]).find('table.table-no-stretch.center > tbody > tr');
@@ -165,6 +71,7 @@ function handleElementBoxOne(element: cheerio.Element, $: cheerio.Root) {
         const supportSkill = getSupportSkill(elements[2], $);
 
         return {
+            ...digimon,
             typeEffectiveness,
             supportSkill
         }
@@ -172,10 +79,60 @@ function handleElementBoxOne(element: cheerio.Element, $: cheerio.Root) {
         const supportSkill = getSupportSkill(elements[1], $);
 
         return {
+            ...digimon,
             typeEffectiveness: null,
             supportSkill
         }
     }
+}
+
+function getBaseDigimon(element: cheerio.Element, $: cheerio.Root) {
+    const digimonTable = $(element).find('table.table.info-table > tbody > tr');
+
+    const digimon = {
+        name: '',
+        number: 0,
+        stage: Stage.trainingLower,
+        attribute: Attribute.free,
+        type: Type.neutral,
+        memoryUsage: 0,
+        equipmentSlot: 0,
+    };
+
+    digimonTable.each((index: number, row: cheerio.Element) => {
+        const key = $(row).find('th').text();
+        const value = $(row).find('td').text();
+        switch (key) {
+            case 'Name':
+                digimon.name = value;
+                break;
+            
+            case 'Stage':
+                digimon.stage = getStage(value);
+                break;
+
+            case 'Attribute':
+                digimon.attribute = getAttribute(value);
+                break;
+
+            case 'Type':
+                digimon.type = getType(value);
+                break;
+
+            case 'Memory':
+                digimon.memoryUsage = Number(value);
+                break;
+
+            case 'Equipment':
+                digimon.equipmentSlot = Number(value);
+                break;
+        
+            default:
+                break;
+        }
+    });
+
+    return digimon;
 }
 
 function getBaseStats(element: cheerio.Element, $: cheerio.Root): Stats[] {
@@ -201,7 +158,7 @@ function getBaseStats(element: cheerio.Element, $: cheerio.Root): Stats[] {
     return stats;
 }
 
-function getEvolvesTo(element: cheerio.Element, $: cheerio.Root): DigivolutionRoute[] {
+function getDigivolutions(element: cheerio.Element, $: cheerio.Root): DigivolutionRoute[] {
     const table = $(element).find('.element-overflow > table > tbody > tr');
     const digivolutions: DigivolutionRoute[] = [];
 
@@ -350,10 +307,18 @@ function getDigivolutionConditions(element: cheerio.Element, $: cheerio.Root): D
     return digivolutionConditions;
 }
 
-export async function getDigimonMetaData(digimonUrl: string) {
+export async function getDigimonMetaData(digimonUrl: string): Promise<Digimon> {
     const digimon: Digimon = {
+        name: '',
+        number: 0,
+        stage: Stage.trainingLower,
+        attribute: Attribute.free,
+        type: Type.neutral,
+        memoryUsage: 2,
+        equipmentSlot: 0,
         digivolutionConditions: null,
-        digivolutionRoutes: [],
+        digivolutionPotential: [],
+        digivolutionHistory: [],
         drops: [],
         moves: [],
         typeEffectiveness: null,
@@ -372,11 +337,20 @@ export async function getDigimonMetaData(digimonUrl: string) {
             const $: cheerio.Root = cheerio.load(html);
             const elementBoxes = $('.container > .page-wrapper > main > .box');
 
+            console.log(elementBoxes.length)
+
             if (elementBoxes.length === 5) {
                 elementBoxes.each((index: number, element: cheerio.Element) => {
                     switch (index) {
                         case 0:
                             const vals = handleElementBoxOne(element, $);
+                            digimon.name = vals.name;
+                            digimon.number = vals.number;
+                            digimon.stage = vals.stage;
+                            digimon.attribute = vals.attribute;
+                            digimon.type = vals.type;
+                            digimon.memoryUsage = vals.memoryUsage;
+                            digimon.equipmentSlot = vals.equipmentSlot;
                             digimon.typeEffectiveness = vals.typeEffectiveness;
                             digimon.supportSkill = vals.supportSkill;
                             break;
@@ -400,6 +374,13 @@ export async function getDigimonMetaData(digimonUrl: string) {
                     switch (index) {
                         case 0:
                             const vals = handleElementBoxOne(element, $);
+                            digimon.name = vals.name;
+                            digimon.number = vals.number;
+                            digimon.stage = vals.stage;
+                            digimon.attribute = vals.attribute;
+                            digimon.type = vals.type;
+                            digimon.memoryUsage = vals.memoryUsage;
+                            digimon.equipmentSlot = vals.equipmentSlot;
                             digimon.typeEffectiveness = vals.typeEffectiveness;
                             digimon.supportSkill = vals.supportSkill;
                             break;
@@ -415,8 +396,8 @@ export async function getDigimonMetaData(digimonUrl: string) {
                             break;
 
                         case 3:
-                            const digivolutions = getEvolvesTo(element, $);
-                            digimon.digivolutionRoutes = digivolutions;
+                            const digivolutions = getDigivolutions(element, $);
+                            digimon.digivolutionPotential = digivolutions;
                             break;
 
                         case 4:
@@ -433,6 +414,13 @@ export async function getDigimonMetaData(digimonUrl: string) {
                     switch (index) {
                         case 0:
                             const vals = handleElementBoxOne(element, $);
+                            digimon.name = vals.name;
+                            digimon.number = vals.number;
+                            digimon.stage = vals.stage;
+                            digimon.attribute = vals.attribute;
+                            digimon.type = vals.type;
+                            digimon.memoryUsage = vals.memoryUsage;
+                            digimon.equipmentSlot = vals.equipmentSlot;
                             digimon.typeEffectiveness = vals.typeEffectiveness;
                             digimon.supportSkill = vals.supportSkill;
                             break;
@@ -443,8 +431,8 @@ export async function getDigimonMetaData(digimonUrl: string) {
                             break;
 
                         case 2:
-                            const digivolutions = getEvolvesTo(element, $);
-                            digimon.digivolutionRoutes = digivolutions;
+                            const digivolutions = getDigivolutions(element, $);
+                            digimon.digivolutionPotential = digivolutions;
                             break;
 
                         case 3:
@@ -458,6 +446,69 @@ export async function getDigimonMetaData(digimonUrl: string) {
                             break;
                         
                         case 5:
+                            const drops = getDrops(element, $);
+                            digimon.drops = drops;
+                            break;
+                    
+                        default:
+                            break;
+                    }
+                });
+            } else if (elementBoxes.length === 9) {
+                elementBoxes.each((index: number, element: cheerio.Element) => {
+                    switch (index) {
+                        case 0:
+                            const vals = handleElementBoxOne(element, $);
+                            digimon.name = vals.name;
+                            digimon.number = vals.number;
+                            digimon.stage = vals.stage;
+                            digimon.attribute = vals.attribute;
+                            digimon.type = vals.type;
+                            digimon.memoryUsage = vals.memoryUsage;
+                            digimon.equipmentSlot = vals.equipmentSlot;
+                            digimon.typeEffectiveness = vals.typeEffectiveness;
+                            digimon.supportSkill = vals.supportSkill;
+                            break;
+        
+                        case 1:
+                            const stats = getBaseStats(element, $);
+                            digimon.stats = stats;
+                            break;
+
+                        case 2:
+                            const conditions = getDigivolutionConditions(element, $);
+                            digimon.digivolutionConditions = conditions;
+                            break;
+
+                        case 3:
+                            const digivolutionHistory = getDigivolutions(element, $);
+
+                            if (Array.isArray(digivolutionHistory)) {
+                                digimon.digivolutionHistory = digivolutionHistory;
+                            }
+                            
+                            break;
+
+                        case 4:
+                            const digivolutions = getDigivolutions(element, $);
+
+                            if (Array.isArray(digivolutions)) {
+                                digimon.digivolutionPotential = digivolutions;
+                            }
+
+                            break;
+
+                        case 5:
+                            const moves = getMoves(element, $);
+                            digimon.moves = moves;
+                            break;
+
+                        case 6:
+                            const spawnLocations = getSpawnLocations(element, $);
+                            digimon.spawnLocations = spawnLocations;
+                            break;
+                        
+                        case 7:
                             const drops = getDrops(element, $);
                             digimon.drops = drops;
                             break;
