@@ -2,6 +2,7 @@ import { Attribute, Digimon as IDigimon, Stage, Type } from '../interfaces/inter
 
 export class Digimon implements IDigimon {
     name = '';
+    description = '';
     number = 0;
     stage = Stage.trainingLower;
     type = Type.free;

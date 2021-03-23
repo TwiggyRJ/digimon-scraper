@@ -127,6 +127,7 @@ export interface DigimonMeta {
 
 export interface Digimon extends DigimonMeta {
     name: string;
+    description: string;
     number: number
     stage: Stage;
     attribute: Attribute;

@@ -306,6 +306,7 @@ export async function getDigimonMetaData(digimonUrl: string): Promise<Digimon> {
     try {
         const digimon: Digimon = {
             name: '',
+            description: '',
             number: 0,
             stage: Stage.trainingLower,
             attribute: Attribute.neutral,
@@ -336,8 +337,11 @@ export async function getDigimonMetaData(digimonUrl: string): Promise<Digimon> {
             nextLinkText.lastIndexOf('#') + 1,
             nextLinkText.lastIndexOf(' ')
         );
+        const description = $('h3:contains("In-game description")').next().find('p').text();
 
+        digimon.description = description;
         digimon.number = (Number(digimonNumber) - 1);
+
         elementBoxes.each((index: number, element: cheerio.Element) => {
             if (index === 0) {
                 const vals = handleElementBoxOne(element, $);
@@ -382,8 +386,6 @@ export async function getDigimonMetaData(digimonUrl: string): Promise<Digimon> {
                 }
             }
         });
-        
-        console.log(digimon);
 
         return digimon;
     } catch (error) {

@@ -17,11 +17,17 @@ export async function getDigimon(isDev: boolean) {
             const html = response.data;
             const $ = cheerio.load(html);
             const digimonTable = $('#searchable-table > tr');
-            const digimons: any[] = [];
+            const allDigimon: Digimon[] = [];
 
             console.log(`Digimon in total: ${digimonTable.length}`);
 
             digimonTable.each(async (index, element) => {
+                if (isDev) {
+                    if (index > 3) {
+                        return false;
+                    }
+                }
+
                 const name = $(element).find('td:nth-child(3) > a').text();
                 const number = $(element).find('td:nth-child(1)').text();
                 const stage = $(element).find('td:nth-child(4)').text();
@@ -31,7 +37,8 @@ export async function getDigimon(isDev: boolean) {
                 const equipmentSlot = $(element).find('td:nth-child(8)').text();
                 const url = $(element).find('td:nth-child(3) > a').attr('href');
 
-                let vals: DigimonMeta = {
+                let vals: any = {
+                    description: '',
                     digivolutionConditions: null,
                     digivolutionPotential: [],
                     digivolutionHistory: [],
@@ -47,13 +54,9 @@ export async function getDigimon(isDev: boolean) {
                     }
                 };
 
-                if (isDev) {
-                    if (index < 2) {
-                        vals = await getDigimonMetaData(url || '');
-                    }
-                } else {
-                    vals = await getDigimonMetaData(url || '');
-                }
+                vals = await getDigimonMetaData(url || '');
+
+                setTimeout(() => {}, 15000);
 
                 const digimon: Digimon = {
                     ...vals,
@@ -65,14 +68,10 @@ export async function getDigimon(isDev: boolean) {
                     memoryUsage: Number(memoryUsage),
                     equipmentSlot: Number(equipmentSlot)
                 };
-
-                console.log(digimon);
-
+  
                 storeData(`${dir}/${digimon.name}.json`, digimon);
-                digimons.push(digimon);
+                allDigimon.push(digimon);
             });
-
-            storeData(`${dir}/digimon.json`, JSON.stringify(digimons));
         })
         .catch(console.error);
     } catch (error) {

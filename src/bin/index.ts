@@ -8,6 +8,7 @@ import appPackage from '../../package.json';
 import { getDigimon } from '../all-digimon-scraper';
 import { getDigimonMetaData } from '../digimon-scraper';
 import { dir, doesDataFolderExist, storeData } from '../utils/files';
+import { seedAllDigimon } from '../seeder';
 
 clear();
 console.log(chalk.red(
@@ -22,8 +23,6 @@ const devOption = {
     message: 'Are you testing this function?',
     choices: ['Yes', 'No'],
 };
-
-
 
 async function menuGetDigimon(url: string) {
     const digimon = await getDigimonMetaData(url);
@@ -111,6 +110,56 @@ function renderDigimonOptions() {
     });
 }
 
+function renderSeedDigimonOptions() {
+    return inquirer.prompt([
+        {
+            type: 'list',
+            name: 'seedDigimon',
+            message: 'Single or all of them?',
+            choices: ['All', 'Single']
+        },
+        devOption
+    ]).then((answers) => {
+        switch (answers.seedDigimon) {
+            case 'All':
+                seedAllDigimon(answers.dev === 'Yes');
+                break;
+
+            case 'Single':
+                console.info('What?');
+                // renderSingleDigimonOption(answers.dev === 'Yes');
+                break;
+
+            default:
+                break;
+        }
+    });
+}
+
+function renderSeederOptions() {
+    return inquirer.prompt([
+        {
+            type: 'list',
+            name: 'seeder',
+            message: 'Digimon, Moves, Items, Areas or All of them?',
+            choices: ['All', 'Digimon', 'Moves', 'Items', 'Areas']
+        },
+    ]).then((answers) => {
+        switch (answers.seeder) {
+            case 'All':
+                
+                break;
+
+            case 'Digimon':
+                renderSeedDigimonOptions();
+                break;
+
+            default:
+                break;
+        }
+    });
+}
+
 function handleIndexPrompt(answers: any) {
     switch (answers.index) {
         case 'Get Digimon':
@@ -123,6 +172,11 @@ function handleIndexPrompt(answers: any) {
             console.info('Created 2021');
             console.info(`Version: ${appPackage.version}`);
             console.groupEnd();
+
+        case 'Seed Database':
+            renderSeederOptions();
+            break;
+
         default:
             break;
     }
@@ -133,6 +187,8 @@ inquirer.prompt(
         type: 'rawlist',
         name: 'index',
         message: 'What would you like to do today',
-        choices: ['Get Digimon', 'Get Moves', 'Info']
+        choices: ['Get Digimon', 'Get Moves', 'Seed Database', 'Info']
     }
 ).then(handleIndexPrompt);
+
+seedAllDigimon
