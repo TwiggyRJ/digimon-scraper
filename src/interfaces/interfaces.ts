@@ -122,7 +122,7 @@ export interface DigimonMeta {
     typeEffectiveness: TypeEffectiveness[] | null;
     spawnLocations: SpawnLocation[];
     stats: Stats[];
-    supportSkill: SupportSkill;
+    supportSkill: string;
 }
 
 export interface Digimon extends DigimonMeta {

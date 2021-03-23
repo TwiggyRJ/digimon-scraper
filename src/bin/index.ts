@@ -6,9 +6,10 @@ import figlet from 'figlet';
 
 import appPackage from '../../package.json';
 import { getDigimon } from '../scrapers/digimon/all-digimon-scraper';
-import { getDigimonMetaData } from '../digimon-scraper';
+import { getDigimonMetaData } from '../scrapers/digimon/digimon-scraper';
 import { dir, doesDataFolderExist, storeData } from '../utils/files';
-import { seedAllDigimon } from '../seeder';
+import { seedAllDigimon, seedAllSkills, seedAttributeEffectiveness, seedTypeEffectiveness } from '../seeder';
+import { getSkills } from '../scrapers/skills/skills-scrapers';
 
 clear();
 console.log(chalk.red(
@@ -142,7 +143,7 @@ function renderSeederOptions() {
             type: 'list',
             name: 'seeder',
             message: 'Digimon, Moves, Items, Areas or All of them?',
-            choices: ['All', 'Digimon', 'Moves', 'Items', 'Areas']
+            choices: ['All', 'Digimon', 'Moves', 'Skills', 'Attribute Effectiveness', 'Type Effectiveness', 'Items', 'Areas']
         },
     ]).then((answers) => {
         switch (answers.seeder) {
@@ -152,6 +153,18 @@ function renderSeederOptions() {
 
             case 'Digimon':
                 renderSeedDigimonOptions();
+                break;
+
+            case 'Skills':
+                seedAllSkills();
+                break;
+
+            case 'Attribute Effectiveness':
+                seedAttributeEffectiveness();
+                break;
+
+            case 'Type Effectiveness':
+                seedTypeEffectiveness();
                 break;
 
             default:
@@ -164,6 +177,10 @@ function handleIndexPrompt(answers: any) {
     switch (answers.index) {
         case 'Get Digimon':
             renderDigimonOptions();
+            break;
+        
+        case 'Get Skills':
+            getSkills();
             break;
     
         case 'Info':
@@ -187,7 +204,7 @@ inquirer.prompt(
         type: 'rawlist',
         name: 'index',
         message: 'What would you like to do today',
-        choices: ['Get Digimon', 'Get Moves', 'Seed Database', 'Info']
+        choices: ['Get Digimon', 'Get Moves', 'Get Skills', 'Seed Database', 'Info']
     }
 ).then(handleIndexPrompt);
 

@@ -17,9 +17,5 @@ export class Digimon implements IDigimon {
     typeEffectiveness = null;
     spawnLocations = [];
     stats = [];
-    supportSkill = {
-        title: '',
-        description: '',
-        url: ''
-    }
+    supportSkill = ''
 }

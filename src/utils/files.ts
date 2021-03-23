@@ -51,11 +51,11 @@ export function getFilenames(directory: string): Promise<string[] | Error> {
     });
 }
 
-export async function getArrayOfFiles(files: string[]): Promise<any[] | Error> {
+export async function getArrayOfFiles(files: string[], directory: string): Promise<any[] | Error> {
     return new Promise(async (resolve, reject) => {
         try {
             const dataArray: any[] = await files.map(async (file: string) => {
-                const path = `${dir}/${file}`;
+                const path = `${directory}/${file}`;
                 const data = await readDataAsync(path);
                 return data;
             });
@@ -75,7 +75,7 @@ export async function readAllFiles(directory: string): Promise<any[]> {
 
             if (!Array.isArray(filenames)) throw filenames;
 
-            const files = await getArrayOfFiles(filenames);
+            const files = await getArrayOfFiles(filenames, directory);
 
             if (!Array.isArray(files)) throw files;
 

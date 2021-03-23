@@ -17,25 +17,17 @@ import {
     Stage,
     Attribute,
     Type
-} from './interfaces/interfaces';
+} from '../../interfaces/interfaces';
 
-import { Digimon as DigimonObj } from './models/Digimon';
+import { Digimon as DigimonObj } from '../../models/Digimon';
 
-import { getAttribute, getItemCategory, getStage, getType } from './utils/converters';
+import { getAttribute, getItemCategory, getStage, getType } from '../../utils/converters';
 
-function getSupportSkill(element: cheerio.Element, $: cheerio.Root): SupportSkill {
+function getSupportSkill(element: cheerio.Element, $: cheerio.Root): string {
     const supportSkillTable = $(element).find('table.table-no-stretch.center > tbody > tr');
     const supportSkillTitle = $(supportSkillTable).find('td:nth-child(1)').text();
-    const supportSkillUrl = $(supportSkillTable).find('td:nth-child(1) > a').attr('href');
-    const supportSkillDescription = $(supportSkillTable).find('td:nth-child(2)').text();
 
-    const supportSkill: SupportSkill = {
-        title: supportSkillTitle,
-        description: supportSkillDescription,
-        url: supportSkillUrl || ''
-    };
-
-    return supportSkill;
+    return supportSkillTitle;
 }
 
 function handleElementBoxOne(element: cheerio.Element, $: cheerio.Root) {
@@ -321,11 +313,7 @@ export async function getDigimonMetaData(digimonUrl: string): Promise<Digimon> {
             typeEffectiveness: null,
             spawnLocations: [],
             stats: [],
-            supportSkill: {
-                title: '',
-                description: '',
-                url: ''
-            }
+            supportSkill: ''
         };
     
         const response = await axios(digimonUrl);

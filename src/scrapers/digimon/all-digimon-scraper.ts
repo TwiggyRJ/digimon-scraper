@@ -69,7 +69,7 @@ export async function getDigimon(isDev: boolean) {
                     equipmentSlot: Number(equipmentSlot)
                 };
   
-                storeData(`${dir}/digimon/${digimon.name}.json`, digimon);
+                storeData(`${dir}/digimon/${digimon.number}_${digimon.name}.json`, digimon);
                 allDigimon.push(digimon);
             });
         })
