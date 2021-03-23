@@ -5,7 +5,7 @@ import clear from 'clear';
 import figlet from 'figlet';
 
 import appPackage from '../../package.json';
-import { getDigimon } from '../all-digimon-scraper';
+import { getDigimon } from '../scrapers/digimon/all-digimon-scraper';
 import { getDigimonMetaData } from '../digimon-scraper';
 import { dir, doesDataFolderExist, storeData } from '../utils/files';
 import { seedAllDigimon } from '../seeder';

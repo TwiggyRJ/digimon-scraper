@@ -2,9 +2,9 @@
 import axios from 'axios';
 import cheerio from 'cheerio';
 import { getDigimonMetaData } from './digimon-scraper';
-import { Digimon, DigimonMeta } from './interfaces/interfaces';
-import { getAttribute, getStage, getType } from './utils/converters';
-import { dir, doesDataFolderExist, storeData } from './utils/files';
+import { Digimon, DigimonMeta } from '../../interfaces/interfaces';
+import { getAttribute, getStage, getType } from '../../utils/converters';
+import { dir, doesDataFolderExist, storeData } from '../../utils/files';
 
 const url = 'https://www.grindosaur.com/en/games/digimon/digimon-story-cyber-sleuth/digimon';
 
@@ -69,7 +69,7 @@ export async function getDigimon(isDev: boolean) {
                     equipmentSlot: Number(equipmentSlot)
                 };
   
-                storeData(`${dir}/${digimon.name}.json`, digimon);
+                storeData(`${dir}/digimon/${digimon.name}.json`, digimon);
                 allDigimon.push(digimon);
             });
         })
