@@ -91,4 +91,20 @@ export function doesDataFolderExist() {
     if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir);
     }
+
+    if (!fs.existsSync(`${dir}/moves`)) {
+        fs.mkdirSync(`${dir}/moves`);
+    }
+
+    if (!fs.existsSync(`${dir}/items`)) {
+        fs.mkdirSync(`${dir}/items`);
+    }
+
+    if (!fs.existsSync(`${dir}/skills`)) {
+        fs.mkdirSync(`${dir}/skills`);
+    }
+
+    if (!fs.existsSync(`${dir}/digimon`)) {
+        fs.mkdirSync(`${dir}/digimon`);
+    }
 }

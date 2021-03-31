@@ -10,9 +10,13 @@ import { getDigimonMetaData } from '../scrapers/digimon/digimon-scraper';
 import { dir, doesDataFolderExist, storeData } from '../utils/files';
 import { seedAllDigimon, seedAllSkills, seedAttributeEffectiveness, seedTypeEffectiveness } from '../seeder';
 import { getSkills } from '../scrapers/skills/skills-scrapers';
+import { getMoves } from '../scrapers/moves/moves-scrapers';
+import { getLocations } from '../scrapers/locations/locations-scrapers';
+import { getItemCategory } from '../utils/converters';
+import { getItems } from '../scrapers/items/items-scraper';
 
 clear();
-console.log(chalk.red(
+console.log(chalk.whiteBright(
     figlet.textSync('Digimon Scraper', { horizontalLayout: 'full' })
 ));
 
@@ -27,7 +31,7 @@ const devOption = {
 
 async function menuGetDigimon(url: string) {
     const digimon = await getDigimonMetaData(url);
-    const file = `${dir}/${digimon.name}.json`;
+    const file = `${dir}/digimon/${digimon.number}_${digimon.name}.json`;
 
     console.info(`Saving file to save: ${file}`);
     doesDataFolderExist();
@@ -182,6 +186,18 @@ function handleIndexPrompt(answers: any) {
         case 'Get Skills':
             getSkills();
             break;
+
+        case 'Get Moves':
+            getMoves(true);
+            break;
+
+        case 'Get Items':
+            getItems(true);
+            break;
+
+        case 'Get Locations':
+            getLocations(true);
+            break;
     
         case 'Info':
             console.group();
@@ -204,7 +220,7 @@ inquirer.prompt(
         type: 'rawlist',
         name: 'index',
         message: 'What would you like to do today',
-        choices: ['Get Digimon', 'Get Moves', 'Get Skills', 'Seed Database', 'Info']
+        choices: ['Get Digimon', 'Get Moves', 'Get Items', 'Get Locations', 'Get Skills', 'Seed Database', 'Info']
     }
 ).then(handleIndexPrompt);
 

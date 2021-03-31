@@ -132,37 +132,29 @@ function getBaseStats(element: cheerio.Element, $: cheerio.Root): Stats[] {
             const value = $(row).find('td:nth-child(2)').text();
             const maxValue = $(row).find('td:nth-child(4)').text();
 
-            const stat: Stats = {
-                name,
-                value: Number(value),
-                maxValue: Number(maxValue)
-            };
+            if (name !== 'Total') {
+                const stat: Stats = {
+                    name,
+                    value: Number(value),
+                    maxValue: Number(maxValue)
+                };
 
-            stats.push(stat);
+                stats.push(stat);
+            }      
         }
     });
 
     return stats;
 }
 
-function getDigivolutions(element: cheerio.Element, $: cheerio.Root): DigivolutionRoute[] {
+function getDigivolutions(element: cheerio.Element, $: cheerio.Root): string[] {
     const table = $(element).find('.element-overflow > table > tbody > tr');
-    const digivolutions: DigivolutionRoute[] = [];
+    const digivolutions: string[] = [];
 
     table.each((index: number, row: cheerio.Element) => {
         const name = $(row).find('td:nth-child(2) > a').text();
-        const stage = $(row).find('td:nth-child(3)').text();
-        const attribute = $(row).find('td:nth-child(4)').text();
-        const type = $(row).find('td:nth-child(5)').text();
 
-        const digivolution: DigivolutionRoute = {
-            name,
-            stage: getStage(stage),
-            attribute: getAttribute(attribute),
-            type: getType(type)
-        };
-
-        digivolutions.push(digivolution);
+        digivolutions.push(name);
     });
 
     return digivolutions;
@@ -206,23 +198,11 @@ function getMoves(element: cheerio.Element, $: cheerio.Root): Moves[] {
 
     table.each((index: number, row: cheerio.Element) => {
         const name = $(row).find('td:nth-child(2) > a').text();
-        const url = $(row).find('td:nth-child(2) > a').attr('href');
         const level = $(row).find('td:nth-child(3)').text();
-        const attribute = $(row).find('td:nth-child(4)').text();
-        const type = $(row).find('td:nth-child(5)').text();
-        const spCost = $(row).find('td:nth-child(6)').text();
-        const power = $(row).find('td:nth-child(7)').text();
-        const skillType = $(row).find('td:nth-child(8)').text();
 
         const move: Moves = {
             name,
             levelAcquired: Number(level),
-            attribute: getAttribute(attribute),
-            type: getType(type),
-            spCost: Number(spCost),
-            power: Number(power),
-            skillType,
-            url: url || ''
         };
 
         moves.push(move);
@@ -275,8 +255,12 @@ function getDigivolutionConditions(element: cheerio.Element, $: cheerio.Root): D
     const sp = $(table).find('td:nth-child(6)').text();
     const speed = $(table).find('td:nth-child(7)').text();
     const ability = $(table).find('td:nth-child(8)').text();
-    const camaraderie = $(table).find('td:nth-child(9)').text();
-    const additionalRequirements = $(table).find('td:nth-child(10)').text();
+    const rawCamaraderie = $(table).find('td:nth-child(9)').text();
+    const additionalConditions = $(table).find('td:nth-child(10)').text();
+
+    const camaraderie = rawCamaraderie === '-' ? null : rawCamaraderie.replace(' %', '');
+
+    console.log(camaraderie)
 
     const digivolutionConditions: DigivolutionConditions = {
         level: level === '-' ? null : Number(level),
@@ -287,8 +271,8 @@ function getDigivolutionConditions(element: cheerio.Element, $: cheerio.Root): D
         sp: sp === '-' ? null : Number(sp),
         speed: speed === '-' ? null : Number(speed),
         ability: ability === '-' ? null : Number(ability),
-        camaraderie: camaraderie === '-' ? null : Number(camaraderie),
-        additionalRequirements: additionalRequirements === '-' ? null : additionalRequirements,
+        camaraderie: camaraderie ?  Number(camaraderie) : null,
+        additionalConditions: additionalConditions === '-' ? null : additionalConditions,
     };
 
     return digivolutionConditions;

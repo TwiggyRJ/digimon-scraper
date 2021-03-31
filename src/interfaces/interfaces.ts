@@ -10,6 +10,12 @@ export enum Type {
     virus = 'virus',
 }
 
+export enum MoveType {
+    magic = 'magic',
+    support = 'support',
+    physical = 'physical'
+}
+
 export enum Attribute {
     dark = 'dark',
     earth = 'earth',
@@ -71,12 +77,6 @@ export interface SpawnLocation {
 export interface Moves {
     name: string;
     levelAcquired: number;
-    attribute: Attribute;
-    type: Type;
-    spCost: number;
-    power: number;
-    skillType: string;
-    url: string;
 }
 
 export interface Drop {
@@ -110,13 +110,13 @@ export interface DigivolutionConditions {
     speed: number | null;
     ability: number | null;
     camaraderie: number | null;
-    additionalRequirements: string | null;
+    additionalConditions: string | null;
 }
 
 export interface DigimonMeta {
     digivolutionConditions: DigivolutionConditions | null;
-    digivolutionPotential: DigivolutionRoute[];
-    digivolutionHistory: DigivolutionRoute[];
+    digivolutionPotential: string[];
+    digivolutionHistory: string[];
     drops: Drop[];
     moves: Moves[];
     typeEffectiveness: TypeEffectiveness[] | null;
