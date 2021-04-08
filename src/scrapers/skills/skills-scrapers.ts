@@ -1,5 +1,5 @@
-import axios from 'axios';
 import cheerio from 'cheerio';
+import { instance } from '../../utils/axios';
 import { dir, doesDataFolderExist, storeData } from '../../utils/files';
 
 const url = 'https://www.grindosaur.com/en/games/digimon/digimon-story-cyber-sleuth/support-skills';
@@ -8,7 +8,7 @@ export async function getSkills() {
   try {
     doesDataFolderExist();
 
-    await axios(url)
+    await instance(url)
       .then(response => {
         const html = response.data;
         const $ = cheerio.load(html);

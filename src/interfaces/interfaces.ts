@@ -41,6 +41,9 @@ export enum Stage {
 
 export enum ItemCategory {
     consumable = 'consumable',
+    equipment = 'equipment',
+    farmGoods = 'farm-goods',
+    keyItem = 'key-item',
     medal = 'medal',
 }
 
@@ -62,16 +65,9 @@ export interface Stats {
 }
 
 export interface SpawnLocation {
-    area: {
-        name: string;
-        url: string;
-    };
+    location: string;
     dropExp: number;
     dropYen: number;
-    zone: {
-        name: string;
-        url: string;
-    }
 }
 
 export interface Moves {
@@ -82,15 +78,7 @@ export interface Moves {
 export interface Drop {
     name: string;
     category: ItemCategory;
-    dropArea: {
-        name: string;
-        url: string;
-    };
-    unlocks: string;
-    zone: {
-        name: string;
-        url: string;
-    }
+    dropLocation: string;
 }
 
 export interface DigivolutionRoute {
@@ -128,10 +116,36 @@ export interface DigimonMeta {
 export interface Digimon extends DigimonMeta {
     name: string;
     description: string;
+    image: string;
     number: number
     stage: Stage;
     attribute: Attribute;
     type: Type;
     memoryUsage: number;
     equipmentSlot: number;
+    dropExp: number;
+    dropMoney: number;
+}
+
+export enum AvailableAt {
+    chapterTwo = 'chapter-2',
+    chapterThree = 'chapter-3',
+    chapterFour = 'chapter-4',
+    chapterFive = 'chapter-5',
+    chapterSix = 'chapter-6',
+    chapterSeven = 'chapter-7',
+    chapterEight = 'chapter-8',
+    chapterNine = 'chapter-9',
+    chapterTen = 'chapter-10',
+    chapterEleven = 'chapter-11',
+    chapterTwelve = 'chapter-12',
+    chapterThirteen = 'chapter-13',
+    chapterFourteen = 'chapter-14',
+    chapterFifteen = 'chapter-15',
+    chapterSixteen = 'chapter-16',
+    chapterSeventeen = 'chapter-17',
+    chapterEighteen = 'chapter-18',
+    chapterNineteen = 'chapter-19',
+    chapterTwenty = 'chapter-20',
+    postGame = 'post-game'
 }

@@ -1,10 +1,10 @@
 // digimon-scraper.ts
-import axios from 'axios';
 import cheerio from 'cheerio';
 import { getDigimonMetaData } from './digimon-scraper';
 import { Digimon, DigimonMeta } from '../../interfaces/interfaces';
 import { getAttribute, getStage, getType } from '../../utils/converters';
 import { dir, doesDataFolderExist, storeData } from '../../utils/files';
+import { delay, instance, randomInteger } from '../../utils/axios';
 
 const url = 'https://www.grindosaur.com/en/games/digimon/digimon-story-cyber-sleuth/digimon';
 
@@ -12,7 +12,7 @@ export async function getDigimon(isDev: boolean) {
     try {
         doesDataFolderExist();
         
-        await axios(url)
+        await instance(url)
         .then(response => {
             const html = response.data;
             const $ = cheerio.load(html);
@@ -23,7 +23,7 @@ export async function getDigimon(isDev: boolean) {
 
             digimonTable.each(async (index, element) => {
                 if (isDev) {
-                    if (index > 3) {
+                    if (index > 20) {
                         return false;
                     }
                 }
@@ -36,6 +36,9 @@ export async function getDigimon(isDev: boolean) {
                 const memoryUsage = $(element).find('td:nth-child(7)').text();
                 const equipmentSlot = $(element).find('td:nth-child(8)').text();
                 const url = $(element).find('td:nth-child(3) > a').attr('href');
+
+                const imageBaseUrl = 'https://digimon-assets.s3.eu-west-2.amazonaws.com/digimon/';
+                const image = `${imageBaseUrl}${Number(number)}_${name.toLowerCase()}.png`;
 
                 let vals: any = {
                     description: '',
@@ -54,13 +57,18 @@ export async function getDigimon(isDev: boolean) {
                     }
                 };
 
+                const awaitTime = (randomInteger(5, 20) * 1000);
+
+                await delay(awaitTime);
+
                 vals = await getDigimonMetaData(url || '');
 
-                setTimeout(() => {}, 15000);
+                await delay(awaitTime);
 
                 const digimon: Digimon = {
                     ...vals,
                     name,
+                    image,
                     number: Number(number),
                     stage: getStage(stage),
                     attribute: getAttribute(attribute),

@@ -1,6 +1,6 @@
-import axios from 'axios';
 import cheerio from 'cheerio';
 import { MoveType } from '../../interfaces/interfaces';
+import { delay, instance, randomInteger } from '../../utils/axios';
 import { getAttribute, getType } from '../../utils/converters';
 import { dir, doesDataFolderExist, storeData } from '../../utils/files';
 
@@ -54,7 +54,7 @@ export async function getMoves(isDev: boolean) {
   try {
     doesDataFolderExist();
 
-    await axios(url)
+    await instance(url)
       .then(response => {
         const html = response.data;
         const $ = cheerio.load(html);
@@ -62,7 +62,7 @@ export async function getMoves(isDev: boolean) {
 
         movesTable.each(async (index, element) => {
           if (isDev) {
-            if (index > 3) return false;
+            if (index > 20) return false;
           }
 
           const iconUrl = $(element).find('td:nth-child(1) > img').attr('src');
@@ -74,10 +74,14 @@ export async function getMoves(isDev: boolean) {
           const power = $(element).find('td:nth-child(6)').text();
           const inheritable = $(element).find('td:nth-child(7)').text();
 
+          const awaitTime = (randomInteger(5, 20) * 1000);
+
+          await delay(awaitTime);
+
           const description = url ? await getMoveDescription(url) : '';
 
-          setTimeout(() => { }, 5000);
-
+          await delay(awaitTime);
+          
           const icon = getIcon(iconUrl || '');
 
           const move = {
@@ -103,7 +107,7 @@ export async function getMoves(isDev: boolean) {
 export async function getMoveDescription(moveUrl: string): Promise<string> {
   try {
 
-    const response = await axios(moveUrl);
+    const response = await instance(moveUrl);
     const html = response.data;
     const $: cheerio.Root = cheerio.load(html);
     const description = $('h3:contains("In-game description")').next().find('p').text();

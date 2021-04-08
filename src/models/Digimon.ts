@@ -3,6 +3,7 @@ import { Attribute, Digimon as IDigimon, Stage, Type } from '../interfaces/inter
 export class Digimon implements IDigimon {
     name = '';
     description = '';
+    image = '';
     number = 0;
     stage = Stage.trainingLower;
     type = Type.free;
@@ -17,5 +18,7 @@ export class Digimon implements IDigimon {
     typeEffectiveness = null;
     spawnLocations = [];
     stats = [];
-    supportSkill = ''
+    supportSkill = '';
+    dropExp = 0;
+    dropMoney = 0;
 }

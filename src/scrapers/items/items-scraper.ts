@@ -1,13 +1,13 @@
-import axios from 'axios';
 import cheerio from 'cheerio';
 import clear from 'clear';
-import { MoveType } from '../../interfaces/interfaces';
-import { getAttribute, getType } from '../../utils/converters';
+import { AvailableAt, MoveType } from '../../interfaces/interfaces';
+import { delay, instance, randomInteger } from '../../utils/axios';
+import { getAttribute, getAvailability, getType } from '../../utils/converters';
 import { dir, doesDataFolderExist, storeData } from '../../utils/files';
 
 interface SoldAt {
   location: string;
-  availableAt: string;
+  availableAt: AvailableAt | null;
 }
 
 interface DroppedBy {
@@ -19,7 +19,7 @@ interface Meta {
   description: string;
   price: number;
   soldAt: SoldAt[];
-  droppedBy: DroppedBy[];
+  droppedBy: string[];
 }
 
 const url = 'https://www.grindosaur.com/en/games/digimon/digimon-story-cyber-sleuth/items';
@@ -27,33 +27,82 @@ const url = 'https://www.grindosaur.com/en/games/digimon/digimon-story-cyber-sle
 export function getItemIcon(image: string): string {
   if (image.includes('1-item-icon')) {
     // HP Pill
-    return 'https://digimon-assets.s3.eu-west-2.amazonaws.com/moves/water.png';
+    return 'https://digimon-assets.s3.eu-west-2.amazonaws.com/items/hp-pill.png';
   } else if (image.includes('3-item-icon')) {
     // HP Spray
-    return 'https://digimon-assets.s3.eu-west-2.amazonaws.com/moves/support-stat-enhancement.png';
+    return 'https://digimon-assets.s3.eu-west-2.amazonaws.com/items/hp-spray.png';
   } else if (image.includes('2-item-icon')) {
     // SP Pill
-    return 'https://digimon-assets.s3.eu-west-2.amazonaws.com/moves/plant.png';
+    return 'https://digimon-assets.s3.eu-west-2.amazonaws.com/items/sp-pill.png';
   } else if (image.includes('4-item-icon')) {
     // SP Spray
-    return 'https://digimon-assets.s3.eu-west-2.amazonaws.com/moves/light.png';
+    return 'https://digimon-assets.s3.eu-west-2.amazonaws.com/items/sp-spray.png';
   } else if (image.includes('5-item-icon')) {
     // Medical Spray
-    return 'https://digimon-assets.s3.eu-west-2.amazonaws.com/moves/wind.png';
+    return 'https://digimon-assets.s3.eu-west-2.amazonaws.com/items/medical-spray.png';
   } else if (image.includes('15-item-icon')) {
     // Revival Capsule
-    return 'https://digimon-assets.s3.eu-west-2.amazonaws.com/moves/neutral.png';
+    return 'https://digimon-assets.s3.eu-west-2.amazonaws.com/items/revival-pill.png';
   } else if (image.includes('16-item-icon')) {
     // Revival Spray
-    return 'https://digimon-assets.s3.eu-west-2.amazonaws.com/moves/earth.png';
-  } else if ('support-icon') {
-    return 'https://digimon-assets.s3.eu-west-2.amazonaws.com/moves/support.png';
-  } else if ('electric-icon') {
-    return 'https://digimon-assets.s3.eu-west-2.amazonaws.com/moves/electric.png';
-  } else if ('fire-icon') {
-    return 'https://digimon-assets.s3.eu-west-2.amazonaws.com/moves/fire.png';
-  } else if ('dark-icon') {
-    return 'https://digimon-assets.s3.eu-west-2.amazonaws.com/moves/dark.png';
+    return 'https://digimon-assets.s3.eu-west-2.amazonaws.com/items/revival-spray.png';
+  } else if ('6-item-icon') {
+    // Poison Recovery
+    return 'https://digimon-assets.s3.eu-west-2.amazonaws.com/items/poison-recovery.png';
+  } else if ('7-item-icon') {
+    // Panic Recovery
+    return 'https://digimon-assets.s3.eu-west-2.amazonaws.com/items/panic-recovery.png';
+  } else if ('8-item-icon') {
+    // Paralysis Recovery
+    return 'https://digimon-assets.s3.eu-west-2.amazonaws.com/items/paralysis-recovery.png';
+  } else if ('9-item-icon') {
+    // Sleep Recovery
+    return 'https://digimon-assets.s3.eu-west-2.amazonaws.com/items/sleep-recovery.png';
+  } else if ('10-item-icon') {
+    // Stun Recovery
+    return 'https://digimon-assets.s3.eu-west-2.amazonaws.com/items/stun-recovery.png';
+  } else if ('11-item-icon') {
+    // Sprite Recovery
+    return 'https://digimon-assets.s3.eu-west-2.amazonaws.com/items/sprite-recovery.png';
+  } else if ('12-item-icon') {
+    // Bug Recovery
+    return 'https://digimon-assets.s3.eu-west-2.amazonaws.com/items/bug-recovery.png';
+  } else if ('13-item-icon') {
+    // Multi Recovery
+    return 'https://digimon-assets.s3.eu-west-2.amazonaws.com/items/multi-recovery.png';
+  } else if ('14-item-icon') {
+    // Multi Recovery DX
+    return 'https://digimon-assets.s3.eu-west-2.amazonaws.com/items/multi-recovery-dx.png';
+  } else if ('17-item-icon') {
+    // Stat Boost
+    return 'https://digimon-assets.s3.eu-west-2.amazonaws.com/items/stat-boost.png';
+  } else if ('18-item-icon') {
+    // Escape Gate
+    return 'https://digimon-assets.s3.eu-west-2.amazonaws.com/items/escape-gate.png';
+  } else if ('19-item-icon') {
+    // Brave Point
+    return 'https://digimon-assets.s3.eu-west-2.amazonaws.com/items/brave-point.png';
+  } else if ('20-item-icon') {
+    // Friendship Point
+    return 'https://digimon-assets.s3.eu-west-2.amazonaws.com/items/friendship-point.png';
+  } else if ('21-item-icon') {
+    // Digi-Egg
+    return 'https://digimon-assets.s3.eu-west-2.amazonaws.com/items/digi-egg.png';
+  } else if ('22-item-icon') {
+    // Jewel
+    return 'https://digimon-assets.s3.eu-west-2.amazonaws.com/items/jewel.png';
+  } else if ('25-item-icon') {
+    // Memory
+    return 'https://digimon-assets.s3.eu-west-2.amazonaws.com/items/memory-up.png';
+  } else if ('23-item-icon') {
+    // Personality Patch Disk
+    return 'https://digimon-assets.s3.eu-west-2.amazonaws.com/items/personality-patch-disk.png';
+  } else if ('24-item-icon') {
+    // Stat Restraint
+    return 'https://digimon-assets.s3.eu-west-2.amazonaws.com/items/stat-restraint.png';
+  } else if ('27-item-icon') {
+    // Digimon Medal
+    return 'https://digimon-assets.s3.eu-west-2.amazonaws.com/items/digimon-medal.png';
   }
 
   return 'none';
@@ -85,7 +134,7 @@ export async function getItems(isDev: boolean) {
   try {
     doesDataFolderExist();
 
-    await axios(url)
+    await instance(url)
       .then(response => {
         const html = response.data;
         const $ = cheerio.load(html);
@@ -93,13 +142,18 @@ export async function getItems(isDev: boolean) {
 
         itemsTable.each(async (index, element) => {
           if (isDev) {
-            if (index > 3) return false;
+            if (index > 20) return false;
           }
 
           const iconUrl = $(element).find('td:nth-child(1) > img').attr('src');
           const name = $(element).find('td:nth-child(2) > a').text();
           const url = $(element).find('td:nth-child(2) > a').attr('href');
           const category = $(element).find('td:nth-child(4)').text();
+
+          const awaitTime = (randomInteger(5, 20) * 1000);
+
+          await delay(awaitTime);
+
 
           const meta = url ? await getItemMeta(url) : {
             description: '',
@@ -108,7 +162,7 @@ export async function getItems(isDev: boolean) {
             droppedBy: []
           };
 
-          setTimeout(() => { }, 10000);
+          await delay(awaitTime);
 
           const icon = getItemIcon(iconUrl || '');
 
@@ -133,7 +187,7 @@ export async function getItems(isDev: boolean) {
 
 export async function getItemMeta(moveUrl: string): Promise<Meta> {
   try {
-    const response = await axios(moveUrl);
+    const response = await instance(moveUrl);
     const html = response.data;
     const $: cheerio.Root = cheerio.load(html);
     const description = $('h3:contains("In-game description")').next().find('p').text();
@@ -163,7 +217,7 @@ export async function getItemMeta(moveUrl: string): Promise<Meta> {
 
           soldAt.push({
             location,
-            availableAt
+            availableAt: getAvailability(availableAt)
           });
         });
 
@@ -173,16 +227,15 @@ export async function getItemMeta(moveUrl: string): Promise<Meta> {
       if (sectionTitle.includes('dropped by')) {
         const droppedTable = $(element).find('.element-overflow > table > tbody > tr');
 
-        const droppedBy: DroppedBy[] = [];
+        const droppedBy: string[] = [];
 
         droppedTable.each((rowIndex, row) => {
           const name = $(row).find('td:nth-child(2) > a').text();
           const location = $(row).find('td:nth-child(6) > a').text();
 
-          droppedBy.push({
-            name,
-            location,
-          });
+          if (droppedBy.includes(name) === false) {
+            droppedBy.push(name);
+          }
         });
 
         meta.droppedBy = droppedBy;

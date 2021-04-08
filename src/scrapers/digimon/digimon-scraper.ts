@@ -20,8 +20,10 @@ import {
 } from '../../interfaces/interfaces';
 
 import { Digimon as DigimonObj } from '../../models/Digimon';
+import { instance } from '../../utils/axios';
 
 import { getAttribute, getItemCategory, getStage, getType } from '../../utils/converters';
+import { assetsURL, generateImageFileName } from '../../utils/files';
 
 function getSupportSkill(element: cheerio.Element, $: cheerio.Root): string {
     const supportSkillTable = $(element).find('table.table-no-stretch.center > tbody > tr');
@@ -168,22 +170,12 @@ function getSpawnLocations(element: cheerio.Element, $: cheerio.Root): SpawnLoca
         const rawYen = $(row).find('td:nth-child(3)').text();
         const yen = `${rawYen.replace(' ¥', '')}`;
         const exp = $(row).find('td:nth-child(4)').text();
-        const area = $(row).find('td:nth-child(5) > a').text();
-        const areaUrl = $(row).find('td:nth-child(5) > a').attr('href');
-        const zone = $(row).find('td:nth-child(6) > a').text();
-        const zoneUrl = $(row).find('td:nth-child(6) > a').attr('href');
+        const location = $(row).find('td:nth-child(5) > a').text();
 
         const spawnLocation: SpawnLocation = {
             dropYen: Number(yen),
             dropExp: Number(exp),
-            area: {
-                name: area,
-                url: areaUrl || ''
-            },
-            zone: {
-                name: zone,
-                url: zoneUrl || ''
-            }
+            location: location,
         };
 
         spawnLocations.push(spawnLocation);
@@ -218,24 +210,12 @@ function getDrops(element: cheerio.Element, $: cheerio.Root): Drop[] {
     table.each((index: number, row: cheerio.Element) => {
         const name = $(row).find('td:nth-child(2) > a').text();
         const category = $(row).find('td:nth-child(3)').text();
-        const area = $(row).find('td:nth-child(4) > a').text();
-        const areaUrl = $(row).find('td:nth-child(4) > a').attr('href');
-        const unlocks = $(row).find('td:nth-child(5)').text();
-        const zone = $(row).find('td:nth-child(6) > a').text();
-        const zoneUrl = $(row).find('td:nth-child(6) > a').attr('href');
+        const location = $(row).find('td:nth-child(4) > a').text();
 
         const drop: Drop = {
             name,
             category: getItemCategory(category),
-            dropArea: {
-                name: area,
-                url: areaUrl || ''
-            },
-            unlocks,
-            zone: {
-                name: zone,
-                url: zoneUrl || ''
-            }
+            dropLocation: location,
         };
 
         drops.push(drop);
@@ -260,8 +240,6 @@ function getDigivolutionConditions(element: cheerio.Element, $: cheerio.Root): D
 
     const camaraderie = rawCamaraderie === '-' ? null : rawCamaraderie.replace(' %', '');
 
-    console.log(camaraderie)
-
     const digivolutionConditions: DigivolutionConditions = {
         level: level === '-' ? null : Number(level),
         attack: attack === '-' ? null : Number(attack),
@@ -278,11 +256,12 @@ function getDigivolutionConditions(element: cheerio.Element, $: cheerio.Root): D
     return digivolutionConditions;
 }
 
-export async function getDigimonMetaData(digimonUrl: string): Promise<Digimon> {
+export async function getDigimonMetaData(digimonUrl: string, retried?: boolean): Promise<Digimon> {
     try {
         const digimon: Digimon = {
             name: '',
             description: '',
+            image: '',
             number: 0,
             stage: Stage.trainingLower,
             attribute: Attribute.neutral,
@@ -297,7 +276,9 @@ export async function getDigimonMetaData(digimonUrl: string): Promise<Digimon> {
             typeEffectiveness: null,
             spawnLocations: [],
             stats: [],
-            supportSkill: ''
+            supportSkill: '',
+            dropExp : 0,
+            dropMoney: 0
         };
     
         const response = await axios(digimonUrl);
@@ -352,15 +333,27 @@ export async function getDigimonMetaData(digimonUrl: string): Promise<Digimon> {
                 } else if (sectionTitle.includes('spawns')) {
                     const spawnLocations = getSpawnLocations(element, $);
                     digimon.spawnLocations = spawnLocations;
+                    digimon.dropExp = spawnLocations[0].dropExp || 0;
+                    digimon.dropMoney = spawnLocations[0].dropYen || 0;
                 } else if (sectionTitle.includes('drops')) {
                     const drops = getDrops(element, $);
                     digimon.drops = drops;
                 }
             }
         });
+        
+        const image = generateImageFileName(digimon.name, Number(digimon.number), `${assetsURL}/digimon`);
+
+        digimon.image = image;
 
         return digimon;
     } catch (error) {
+        if (retried) {
+
+        } else {
+            setTimeout(() => {}, 40000);
+            await getDigimonMetaData(digimonUrl, true);
+        }
         console.error(error);
         return new DigimonObj();
     }

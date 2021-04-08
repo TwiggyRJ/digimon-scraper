@@ -58,7 +58,7 @@ async function renderSingleDigimonOption(isDev: boolean) {
         type: 'list',
         name: 'digimon',
         message: 'Single or all of them?',
-        choices: ['Kuramon', 'Gallantmon', 'Andromon', 'Leopardmon NX', 'Custom']
+        choices: ['Kuramon', 'Gallantmon', 'Andromon', 'Leopardmon NX', 'Arcadiamon In Training', 'Custom']
     }).then(async (answers) => {
         switch (answers.digimon) {
             case 'Kuramon':
@@ -75,6 +75,10 @@ async function renderSingleDigimonOption(isDev: boolean) {
 
             case 'Leopardmon NX':
                 await menuGetDigimon('https://www.grindosaur.com/en/games/digimon/digimon-story-cyber-sleuth/digimon/339-leopardmon-nx');
+                break;
+
+            case 'Arcadiamon In Training':
+                await menuGetDigimon('https://www.grindosaur.com/en/games/digimon/digimon-story-cyber-sleuth/digimon/6-arcadiamon-in-tr');
                 break;
 
             case 'Custom':
