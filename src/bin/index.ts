@@ -192,7 +192,7 @@ async function handleIndexPrompt(answers: any) {
       break;
 
     case 'Get Moves':
-      await getMoves(true);
+      await getMoves(false);
       break;
 
     case 'Get Items':

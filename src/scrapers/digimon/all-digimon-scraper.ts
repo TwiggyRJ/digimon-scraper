@@ -33,7 +33,7 @@ export async function getDigimon(isDev: boolean) {
 
     digimonTable.each(async (index, element) => {
       if (isDev) {
-        if (index > 20) {
+        if (index > 40) {
           return false;
         }
       }
@@ -86,7 +86,8 @@ async function getDataAsync(args: GetDataMeta) {
   } = args;
 
   const imageBaseUrl = 'https://digimon-assets.s3.eu-west-2.amazonaws.com/digimon/';
-  const image = `${imageBaseUrl}${number}_${name.toLowerCase()}.png`;
+  const baseImageName = name.toLowerCase().replace(/\./g, '').replace(/\s+/g, '_').replace(/-/g, '_').replace(/[{()}]/g, '');
+  const image = `${imageBaseUrl}${number}_${baseImageName}.png`;
 
   let vals: any = {
     description: '',

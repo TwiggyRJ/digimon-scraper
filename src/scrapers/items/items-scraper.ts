@@ -30,6 +30,23 @@ interface GetDataMeta {
   index: number;
 }
 
+interface ItemEffect {
+  stat: string;
+  effect: string | number;
+  duration: string;
+  target: string;
+}
+
+const stats = [
+  'ATK',
+  'DEF',
+  'INT',
+  'HP',
+  'SP',
+  'SPD',
+  'EXP'
+];
+
 const url = 'https://www.grindosaur.com/en/games/digimon/digimon-story-cyber-sleuth/items';
 
 export function getItemIcon(image: string): string {
@@ -290,6 +307,101 @@ export async function getItems(isDev: boolean) {
   }
 }
 
+function getItemEffect(name: string, itemType: string, description: string) {
+  const nameToCheck = name.toLowerCase();
+  const itemTypeToCheck = itemType.toLowerCase();
+
+  if (itemTypeToCheck === "consumable" || itemTypeToCheck === "equipment") {
+    let matched = false;
+    const splitDescription = description.split(' ');
+
+    const effect: ItemEffect = {
+      stat: '',
+      effect: 0,
+      duration: itemType === "Equipment" ? 'permanent-equiped' : 'on-use',
+      target: 'single',
+    };
+
+    if (nameToCheck.includes('full')) {
+      matched = true;
+      effect.stat = 'revival';
+      effect.effect = "100%";
+      effect.duration = "on-use";
+      effect.target = "team";
+    } else if (nameToCheck.includes('medical spray dx')) {
+      matched = true;
+      effect.stat = 'HP & SP';
+      effect.effect = "100%";
+      effect.duration = "on-use";
+      effect.target = "team";
+    } else if (nameToCheck.includes('medical spray')) {
+      matched = true;
+      effect.stat = 'HP & SP';
+      effect.effect = "50%";
+      effect.duration = "on-use";
+      effect.target = "team";
+    } else if (nameToCheck === "memory up") {
+      matched = true;
+      effect.stat = 'MEM';
+      effect.effect = 5;
+      effect.duration = "permanent";
+      effect.target = "digivice";
+    } else if (nameToCheck === "memory up dx") {
+      matched = true;
+      effect.stat = 'MEM';
+      effect.effect = 10;
+      effect.duration = "permanent";
+      effect.target = "digivice";
+    }
+
+    if (matched === false) {
+      stats.forEach(stat => {
+        if (matched === false) {
+          const wordIndex = splitDescription.findIndex(word => word === stat);
+
+          if (wordIndex !== -1) {
+            matched = true;
+
+            effect.stat = stat;
+
+            if (nameToCheck.includes("attach")) {
+              effect.effect = Number(splitDescription[wordIndex + 1]);
+            } else if (nameToCheck.includes("recovery")) {
+              effect.effect = Number(splitDescription[wordIndex - 1]);
+              effect.duration = "on-use";
+            } else if (nameToCheck.includes("spray a") || nameToCheck.includes("capsule a")) {
+              effect.effect = "100%";
+              effect.duration = "on-use";
+            } else if (nameToCheck.includes("spray") || nameToCheck.includes("capsule")) {
+              effect.effect = Number(splitDescription[wordIndex - 1]);
+              effect.duration = "on-use";
+            } else if (nameToCheck.includes("boost")) {
+              effect.effect = splitDescription[wordIndex + 2];
+              effect.duration = "5-turns";
+            } else if (nameToCheck.includes('brave point')) {
+              const val = splitDescription[wordIndex - 1];
+              effect.effect = Number(val.replace(/,/g, ''));
+              effect.duration = 'permanent';
+            } else if (nameToCheck.includes('friendship')) {
+              const val = splitDescription[wordIndex + 2];
+              effect.effect = Number(val.replace(/,/g, ''));
+              effect.duration = 'permanent';
+            }
+          }
+        }
+      });
+    }
+
+    if (matched) {
+      return effect;
+    }
+
+    return null;
+  }
+
+  return null;
+}
+
 async function getDataAsync(args: GetDataMeta) {
   const { iconUrl, name, url, category, index } = args;
 
@@ -311,7 +423,7 @@ async function getDataAsync(args: GetDataMeta) {
   ) {
     console.info('We are in the next 100');
     console.info('delaying');
-    await delay((20 * 1000));
+    await delay((10 * 1000));
     console.info('has delayed');
   }
 
@@ -331,7 +443,11 @@ async function getDataAsync(args: GetDataMeta) {
 
   const icon = getItemIcon(iconUrl || '');
 
-  const item = {
+  const itemEffect = getItemEffect(name, category, meta.description);
+
+  console.log(itemEffect)
+
+  let item: any = {
     name,
     icon,
     category: getItemCategory(category),
@@ -340,6 +456,13 @@ async function getDataAsync(args: GetDataMeta) {
     soldAt: meta.soldAt,
     droppedBy: meta.droppedBy
   };
+
+  if (itemEffect) {
+    item = {
+      ...item,
+      effect: itemEffect
+    }
+  }
 
   console.groupEnd();
 
