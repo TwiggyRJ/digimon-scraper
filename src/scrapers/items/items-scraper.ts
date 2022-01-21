@@ -20,6 +20,7 @@ interface Meta {
   price: number;
   soldAt: SoldAt[];
   droppedBy: string[];
+  medalNumber?: number | null;
 }
 
 interface GetDataMeta {
@@ -30,11 +31,24 @@ interface GetDataMeta {
   index: number;
 }
 
+enum ItemEffectUnit {
+  None = 'none',
+  Percentage = 'percentage',
+}
+
+export enum ItemEffectTarget {
+  Digifarm = 'digifarm',
+  Digivice = 'digivice',
+  Single = 'single',
+  Team = 'team',
+}
+
 interface ItemEffect {
   stat: string;
   effect: string | number;
   duration: string;
-  target: string;
+  target: ItemEffectTarget;
+  unit: ItemEffectUnit;
 }
 
 const stats = [
@@ -44,7 +58,11 @@ const stats = [
   'HP',
   'SP',
   'SPD',
-  'EXP'
+  'EXP',
+  'EVA',
+  'ACU',
+  'CRT',
+  'CAM',
 ];
 
 const url = 'https://www.grindosaur.com/en/games/digimon/digimon-story-cyber-sleuth/items';
@@ -310,96 +328,229 @@ export async function getItems(isDev: boolean) {
 function getItemEffect(name: string, itemType: string, description: string) {
   const nameToCheck = name.toLowerCase();
   const itemTypeToCheck = itemType.toLowerCase();
+  const effects: ItemEffect[] = [];
 
   if (itemTypeToCheck === "consumable" || itemTypeToCheck === "equipment") {
     let matched = false;
+    let restrictedMatch = false;
     const splitDescription = description.split(' ');
 
     const effect: ItemEffect = {
       stat: '',
       effect: 0,
       duration: itemType === "Equipment" ? 'permanent-equiped' : 'on-use',
-      target: 'single',
+      target: ItemEffectTarget.Single,
+      unit: ItemEffectUnit.None,
     };
 
-    if (nameToCheck.includes('full')) {
-      matched = true;
-      effect.stat = 'revival';
-      effect.effect = "100%";
-      effect.duration = "on-use";
-      effect.target = "team";
-    } else if (nameToCheck.includes('medical spray dx')) {
-      matched = true;
-      effect.stat = 'HP & SP';
-      effect.effect = "100%";
-      effect.duration = "on-use";
-      effect.target = "team";
-    } else if (nameToCheck.includes('medical spray')) {
-      matched = true;
-      effect.stat = 'HP & SP';
-      effect.effect = "50%";
-      effect.duration = "on-use";
-      effect.target = "team";
-    } else if (nameToCheck === "memory up") {
-      matched = true;
-      effect.stat = 'MEM';
-      effect.effect = 5;
-      effect.duration = "permanent";
-      effect.target = "digivice";
-    } else if (nameToCheck === "memory up dx") {
-      matched = true;
-      effect.stat = 'MEM';
-      effect.effect = 10;
-      effect.duration = "permanent";
-      effect.target = "digivice";
+    if (effects.length === 0) {
+      if (nameToCheck === "aegis apple") {
+        restrictedMatch = true;
+
+        effects.push({
+          ...effect,
+          stat: 'DEF',
+          effect: 10,
+          duration: "on-use",
+          target: ItemEffectTarget.Digifarm,
+          unit: ItemEffectUnit.None,
+        });
+      } else if (nameToCheck.includes('full')) {
+        restrictedMatch = true;
+
+        effects.push({
+          ...effect,
+          stat: 'revival',
+          effect: 100,
+          duration: "on-use",
+          target: ItemEffectTarget.Team,
+          unit: ItemEffectUnit.Percentage,
+        });
+      } else if (nameToCheck.includes('medical spray dx')) {
+        restrictedMatch = true;
+        
+        effects.push({
+          ...effect,
+          stat: 'HP',
+          effect: 100,
+          duration: "on-use",
+          target: ItemEffectTarget.Team,
+          unit: ItemEffectUnit.Percentage,
+        });
+
+        effects.push({
+          ...effect,
+          stat: 'SP',
+          effect: 100,
+          duration: "on-use",
+          target: ItemEffectTarget.Team,
+          unit: ItemEffectUnit.Percentage,
+        });
+      } else if (nameToCheck.includes('medical spray')) {
+        restrictedMatch = true;
+
+        effects.push({
+          ...effect,
+          stat: 'HP',
+          effect: 50,
+          duration: "on-use",
+          target: ItemEffectTarget.Team,
+          unit: ItemEffectUnit.Percentage,
+        });
+
+        effects.push({
+          ...effect,
+          stat: 'SP',
+          effect: 50,
+          duration: "on-use",
+          target: ItemEffectTarget.Team,
+          unit: ItemEffectUnit.Percentage,
+        });
+      } else if (nameToCheck === "memory up") {
+        restrictedMatch = true;
+        effects.push({
+          ...effect,
+          stat: 'MEM',
+          effect: 5,
+          duration: "permanent",
+          target: ItemEffectTarget.Digivice,
+        });
+      } else if (nameToCheck === "memory up dx") {
+        restrictedMatch = true;
+        effects.push({
+          ...effect,
+          stat: 'MEM',
+          effect: 10,
+          duration: "permanent",
+          target: ItemEffectTarget.Digivice,
+        });
+      }
     }
 
-    if (matched === false) {
-      stats.forEach(stat => {
-        if (matched === false) {
+    if (restrictedMatch === false) {
+      splitDescription.forEach(descWord => {
+        stats.forEach(stat => {
+          const match = descWord === stat;
           const wordIndex = splitDescription.findIndex(word => word === stat);
 
-          if (wordIndex !== -1) {
+          if (match) {
             matched = true;
-
             effect.stat = stat;
 
-            if (nameToCheck.includes("attach")) {
-              effect.effect = Number(splitDescription[wordIndex + 1]);
+            if (stat === 'EVA' || stat === 'HIT' || stat === 'CRT') {
+              if (nameToCheck.includes("attach")) {
+                const val = splitDescription[wordIndex + 1];
+                effects.push({
+                  ...effect,
+                  effect: Number(val.replace(/%/g, '').replace(/,(?=[^,]*$)/, '')),
+                  unit: ItemEffectUnit.Percentage
+                });
+              } else if (nameToCheck.includes("boost")) {
+                const val = splitDescription[wordIndex + 2];
+                effects.push({
+                  ...effect,
+                  effect: Number(val.replace(/%/g, '').replace(/,(?=[^,]*$)/, '')),
+                  duration: "5-turns",
+                  unit: ItemEffectUnit.Percentage
+                });
+              } else if (nameToCheck.includes("restraint chip a")) {
+                effects.push({
+                  ...effect,
+                  effect: -100,
+                  duration: "permanent",
+                });
+              } else if (nameToCheck.includes("restraint chip b")) {
+                effects.push({
+                  ...effect,
+                  effect: -10,
+                  duration: "permanent",
+                });
+              } else if (nameToCheck.includes("restraint chip c")) {
+                effects.push({
+                  ...effect,
+                  effect: -1,
+                  duration: "permanent",
+                });
+              }
+            } else if (nameToCheck.includes("disk")) {
+              effects.push({
+                ...effect,
+                effect: Number(splitDescription[wordIndex + 1].replace(/,(?=[^,]*$)/, '')),
+              });
+            } else if (nameToCheck.includes("restraint chip a")) {
+              effects.push({
+                ...effect,
+                effect: -100,
+                duration: "permanent",
+              });
+            } else if (nameToCheck.includes("restraint chip b")) {
+              effects.push({
+                ...effect,
+                effect: -10,
+                duration: "permanent",
+              });
+            } else if (nameToCheck.includes("restraint chip c")) {
+              effects.push({
+                ...effect,
+                effect: -1,
+                duration: "permanent",
+              });
+            } else if (nameToCheck.includes("attach")) {
+              effects.push({
+                ...effect,
+                effect: Number(splitDescription[wordIndex + 1].replace(/,(?=[^,]*$)/, '')),
+              });
             } else if (nameToCheck.includes("recovery")) {
-              effect.effect = Number(splitDescription[wordIndex - 1]);
-              effect.duration = "on-use";
+              effects.push({
+                ...effect,
+                effect: Number(splitDescription[wordIndex - 1].replace(/,(?=[^,]*$)/, '')),
+                duration: "on-use"
+              });
             } else if (nameToCheck.includes("spray a") || nameToCheck.includes("capsule a")) {
-              effect.effect = "100%";
-              effect.duration = "on-use";
+              effects.push({
+                ...effect,
+                effect: 100,
+                duration: "on-use",
+                unit: ItemEffectUnit.Percentage
+              });
             } else if (nameToCheck.includes("spray") || nameToCheck.includes("capsule")) {
-              effect.effect = Number(splitDescription[wordIndex - 1]);
-              effect.duration = "on-use";
+              effects.push({
+                ...effect,
+                effect: Number(splitDescription[wordIndex - 1]),
+                duration: "on-use",
+              });
             } else if (nameToCheck.includes("boost")) {
-              effect.effect = splitDescription[wordIndex + 2];
-              effect.duration = "5-turns";
+              const val = splitDescription[wordIndex + 2];
+
+              effects.push({
+                ...effect,
+                effect: Number(val.replace(/%/g, '').replace(/,(?=[^,]*$)/, '')),
+                duration: "5-turns",
+                unit: ItemEffectUnit.Percentage
+              });
             } else if (nameToCheck.includes('brave point')) {
               const val = splitDescription[wordIndex - 1];
-              effect.effect = Number(val.replace(/,/g, ''));
-              effect.duration = 'permanent';
+              effects.push({
+                ...effect,
+                effect: Number(val.replace(/,/g, '').replace(/,(?=[^,]*$)/, '')),
+                duration: "permanent",
+              });
             } else if (nameToCheck.includes('friendship')) {
               const val = splitDescription[wordIndex + 2];
-              effect.effect = Number(val.replace(/,/g, ''));
-              effect.duration = 'permanent';
+              effects.push({
+                ...effect,
+                effect: Number(val.replace(/,/g, '').replace(/,(?=[^,]*$)/, '')),
+                duration: "permanent",
+              });
             }
           }
-        }
+        });
       });
+      
     }
-
-    if (matched) {
-      return effect;
-    }
-
-    return null;
   }
 
-  return null;
+  return effects.length > 0 ? effects : null;
 }
 
 async function getDataAsync(args: GetDataMeta) {
@@ -438,15 +589,14 @@ async function getDataAsync(args: GetDataMeta) {
     description: '',
     price: 0,
     soldAt: [],
-    droppedBy: []
+    droppedBy: [],
+    medalNumber: null
   };
 
   const icon = getItemIcon(iconUrl || '');
 
   const itemEffect = getItemEffect(name, category, meta.description);
-
-  console.log(itemEffect)
-
+  
   let item: any = {
     name,
     icon,
@@ -454,13 +604,14 @@ async function getDataAsync(args: GetDataMeta) {
     description: meta.description,
     price: meta.price,
     soldAt: meta.soldAt,
-    droppedBy: meta.droppedBy
+    droppedBy: meta.droppedBy,
+    medalNumber: meta.medalNumber
   };
 
   if (itemEffect) {
     item = {
       ...item,
-      effect: itemEffect
+      effects: itemEffect
     }
   }
 
@@ -476,13 +627,17 @@ export async function getItemMeta(itemUrl: string): Promise<Meta> {
     const $: cheerio.Root = cheerio.load(html);
     const description = $('h3:contains("In-game description")').next().find('p').text();
     const rawPrice = $('.quick-facts-box > .element-overflow > table > tbody > tr').next().find('th:contains("Price")').next().text();
+    const medalNumber = $('.quick-facts-box > .element-overflow > table > tbody > tr').next().find('th:contains("Medal No.")').next().text();
     const price = rawPrice.replace(' ¥', '');
+
+    console.log(rawPrice, price)
 
     const meta: Meta = {
       description,
       price: price ? Number(price) : 0,
       soldAt: [],
-      droppedBy: []
+      droppedBy: [],
+      medalNumber: medalNumber ? Number(medalNumber) : null
     };
 
     const elementBoxes = $('.container > .page-wrapper > main > .box');
@@ -535,5 +690,67 @@ export async function getItemMeta(itemUrl: string): Promise<Meta> {
       soldAt: [],
       droppedBy: []
     };
+  }
+}
+
+export async function getItem(itemUrl: string) {
+  try {
+    doesDataFolderExist();
+    const awaitTime = (randomInteger(5, 10) * 1000);
+
+
+    console.info(`Getting item ${itemUrl}`)
+
+    const response = await instance(itemUrl);
+    const html = response.data;
+    const $ = cheerio.load(html);
+    const itemsTable = $('.quick-facts-box');
+    
+    const iconUrl = $(itemsTable).find('img').attr('src');
+    const name = $(itemsTable).find('.element-overflow > table > tbody > tr:nth-child(1) > td').text();
+    const category = $(itemsTable).find('.element-overflow > table > tbody > tr:nth-child(2) > td').text();
+    const rawPrice = $(itemsTable).find('.element-overflow > table > tbody > tr:nth-child(3) > td').text();
+    const price = rawPrice.replace(' ¥', '');
+    
+
+    const meta = itemUrl ? await getItemMeta(itemUrl || '') : {
+      description: '',
+      price,
+      soldAt: [],
+      droppedBy: [],
+      medalNumber: null,
+    };
+
+    const icon = getItemIcon(iconUrl || '');
+
+    const itemEffect = getItemEffect(name, category, meta.description);
+
+    let item: any = {
+      name,
+      icon,
+      category: getItemCategory(category),
+      description: meta.description,
+      price: meta.price,
+      soldAt: meta.soldAt,
+      droppedBy: meta.droppedBy,
+      medalNumber: meta.medalNumber
+    };
+
+    if (itemEffect) {
+      item = {
+        ...item,
+        effects: itemEffect
+      }
+    }
+
+    console.info(item)
+
+    console.groupEnd();
+
+    storeData(`${dir}/items/${item.name}.json`, item);
+    console.info('Operation Complete');
+  } catch (error) {
+    console.error(error);
+    console.groupEnd();
   }
 }

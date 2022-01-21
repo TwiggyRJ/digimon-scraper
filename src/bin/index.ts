@@ -13,7 +13,7 @@ import { getSkills } from '../scrapers/skills/skills-scrapers';
 import { getMoves } from '../scrapers/moves/moves-scrapers';
 import { getLocations } from '../scrapers/locations/locations-scrapers';
 import { getItemCategory } from '../utils/converters';
-import { getItems } from '../scrapers/items/items-scraper';
+import { getItem, getItems } from '../scrapers/items/items-scraper';
 
 clear();
 console.log(chalk.whiteBright(
@@ -119,6 +119,47 @@ function renderDigimonOptions() {
   });
 }
 
+async function renderSingleItem() {
+  return inquirer.prompt({
+    type: 'editor',
+    name: 'url',
+    message: 'What is the URL of item you wish to get?',
+  }).then(async (answers) => {
+    const url = answers.url.length > 0 ? answers.url.replace('/(\r\n|\n|\r)/gm', '') : 'https://www.grindosaur.com/en/games/digimon/digimon-story-cyber-sleuth/items/96-aegis-apple';
+
+    if (url.length > 0) {
+      await getItem(url);
+    }
+  })
+}
+
+function renderItemOptions() {
+  return inquirer.prompt([
+    {
+      type: 'list',
+      name: 'items',
+      message: 'Single or all of them?',
+      choices: ['All', 'Single']
+    }
+  ]).then((answers) => {
+    console.info(answers)
+    switch (answers.items) {
+      case 'All':
+        getItems(false);
+        break;
+
+      case 'Single':
+        console.info('What?');
+        renderSingleItem();
+        break;
+
+      default:
+        break;
+    }
+  });
+}
+
+
 function renderSeedDigimonOptions() {
   return inquirer.prompt([
     {
@@ -196,7 +237,7 @@ async function handleIndexPrompt(answers: any) {
       break;
 
     case 'Get Items':
-      await getItems(false);
+      await renderItemOptions();
       break;
 
     case 'Get Locations':
