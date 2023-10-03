@@ -124,6 +124,31 @@ function getBaseDigimon(element: cheerio.Element, $: cheerio.Root) {
   return digimon;
 }
 
+function getStatKey(stat: string | null): string {
+  switch (stat) {
+    case 'HP':
+      return 'hp';
+
+    case 'SP':
+      return 'sp';
+
+    case 'ATK':
+      return 'attack';
+
+    case 'INT':
+      return 'intelligence';
+
+    case 'DEF':
+      return 'defence';
+
+    case 'SPD':
+      return 'speed';
+
+    default:
+      return '';
+  }
+}
+
 function getBaseStats(element: cheerio.Element, $: cheerio.Root): Stats[] {
   const table = $(element).find('.element-overflow > table > tbody > tr');
   const stats: Stats[] = [];
@@ -136,7 +161,7 @@ function getBaseStats(element: cheerio.Element, $: cheerio.Root): Stats[] {
 
       if (name !== 'Total') {
         const stat: Stats = {
-          name,
+          name: getStatKey(name),
           value: Number(value),
           maxValue: Number(maxValue)
         };

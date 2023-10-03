@@ -12,7 +12,8 @@
     "inquirer": "^8.0.0",
     "mysql": "^2.18.1",
     "mysql2": "^2.2.5",
-    "puppeteer": "^8.0.0"
+    "puppeteer": "^8.0.0",
+    "typeorm": "^0.3.6"
   },
   "devDependencies": {
     "@types/cheerio": "^0.22.28",

@@ -33,7 +33,7 @@ export async function getDigimon(isDev: boolean) {
 
     digimonTable.each(async (index, element) => {
       if (isDev) {
-        if (index > 40) {
+        if (index > 100) {
           return false;
         }
       }
@@ -56,14 +56,14 @@ export async function getDigimon(isDev: boolean) {
           type: getType(type),
           memoryUsage: Number(memoryUsage),
           equipmentSlot: Number(equipmentSlot),
-          url
+          url,
         });
       }
     });
 
     let promise = Promise.resolve();
     digimonToGet.forEach((digimon: GetDataMeta, index) => {
-      new Promise(resolve => setTimeout(resolve, 1500 * index)).then(() => getDataAsync(digimon))
+      new Promise((resolve) => setTimeout(resolve, 1500 * index)).then(() => getDataAsync(digimon));
     });
 
     await Promise.resolve(promise);
@@ -74,19 +74,15 @@ export async function getDigimon(isDev: boolean) {
 }
 
 async function getDataAsync(args: GetDataMeta) {
-  const {
-    name,
-    number,
-    stage,
-    type,
-    attribute,
-    memoryUsage,
-    equipmentSlot,
-    url
-  } = args;
+  const { name, number, stage, type, attribute, memoryUsage, equipmentSlot, url } = args;
 
-  const imageBaseUrl = 'https://digimon-assets.s3.eu-west-2.amazonaws.com/digimon/';
-  const baseImageName = name.toLowerCase().replace(/\./g, '').replace(/\s+/g, '_').replace(/-/g, '_').replace(/[{()}]/g, '');
+  const imageBaseUrl = 'https://twiggyrj-digidex-assets.s3.eu-west-2.amazonaws.com/digimon/';
+  const baseImageName = name
+    .toLowerCase()
+    .replace(/\./g, '')
+    .replace(/\s+/g, '_')
+    .replace(/-/g, '_')
+    .replace(/[{()}]/g, '');
   const image = `${imageBaseUrl}${number}_${baseImageName}.png`;
 
   let vals: any = {
@@ -102,11 +98,11 @@ async function getDataAsync(args: GetDataMeta) {
     supportSkill: {
       title: '',
       description: '',
-      url: ''
-    }
+      url: '',
+    },
   };
 
-  const awaitTime = (randomInteger(5, 20) * 1000);
+  const awaitTime = randomInteger(5, 20) * 1000;
 
   await delay(awaitTime);
 
@@ -123,7 +119,7 @@ async function getDataAsync(args: GetDataMeta) {
     attribute,
     type,
     memoryUsage,
-    equipmentSlot
+    equipmentSlot,
   };
 
   storeData(`${dir}/digimon/${digimon.number}_${digimon.name}.json`, digimon);
